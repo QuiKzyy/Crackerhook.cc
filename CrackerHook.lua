@@ -29,12 +29,44 @@ local Window = Library:CreateWindow({
 local Tabs = {
     -- Creates a new tab titled Main
     Main = Window:AddTab('Combat'),
-    ['UI Settings'] = Window:AddTab('UI Settings'),
+    
+     Visuals = Window:AddTab('Visuals'),
+     Rage = Window:AddTab('Rage'), 
+     Misc = Window:AddTab('Misc'), 
+     ['UI Settings'] = Window:AddTab('UI Settings')
 }
 
 -- Groupbox and Tabbox inherit the same functions
 -- except Tabboxes you have to call the functions on a tab (Tabbox:AddTab(name))
 local LeftGroupBox = Tabs.Main:AddLeftGroupbox('Groupbox')
+
+
+
+local LeftGroupBoxRage = Tabs.Rage:AddLeftGroupbox('Character')
+
+LeftGroupBoxRage:AddToggle('Walkspeed', {
+    Text = 'Change LocalPlayer Walkspeed',
+    Default = false, -- Default value (true / false)
+    Tooltip = 'Change LocalPlayer Walkspeed', -- Information shown when you hover over the toggle
+Callback = function(Value)
+        print(SelectedWalkspeed)
+    end
+})
+
+LeftGroupBoxRage:AddSlider('Select Walkspeed', {
+    Text = '',
+    Default = 16,
+    Min = 0,
+    Max = 30,
+    Rounding = 0,
+    Compact = false,
+
+    Callback = function(Value)
+        local SelectedWalkspeed = Value
+    end
+})
+
+
 
 -- We can also get our Main tab via the following code:
 -- local LeftGroupBox = Window.Tabs.Main:AddLeftGroupbox('Groupbox')
@@ -454,3 +486,8 @@ ThemeManager:ApplyToTab(Tabs['UI Settings'])
 -- You can use the SaveManager:LoadAutoloadConfig() to load a config
 -- which has been marked to be one that auto loads!
 SaveManager:LoadAutoloadConfig()
+
+
+
+
+
