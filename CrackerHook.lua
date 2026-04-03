@@ -6,6 +6,33 @@ local Library = loadstring(game:HttpGet(repo .. 'Library.lua'))()
 local ThemeManager = loadstring(game:HttpGet(repo .. 'addons/ThemeManager.lua'))()
 local SaveManager = loadstring(game:HttpGet(repo .. 'addons/SaveManager.lua'))()
 
+--Bypass--
+local LocalPlayer = game.Players.LocalPlayer
+local Humanoid = LocalPlayer.Character.Humanoid
+
+local Connections = {
+    {'CharacterController', Humanoid.GetPropertyChangedSignal(Humanoid, 'WalkSpeed')},
+    {'CharacterController', Humanoid.GetPropertyChangedSignal(Humanoid, 'JumpHeight')},
+    {'CharacterController', Humanoid.GetPropertyChangedSignal(Humanoid, 'HipHeight')},
+    {'CharacterController', Workspace.GetPropertyChangedSignal(Workspace, 'Gravity')},
+    {'CharacterController', Humanoid.StateChanged},
+    {'CharacterController', Humanoid.ChildAdded},
+    {'CharacterController', Humanoid.ChildRemoved},
+}
+
+for Index, Array in pairs(Connections) do
+    for _, Connection in pairs(getconnections(Array[2])) do
+        if type(Connection.Function) == 'function' then
+            local Info = debug.getinfo(Connection.Function)
+
+            if Info and string.find(Info.source, Array[1]) then
+                print(`disabling '{tostring(Connection.Function)}': {tostring(Array[2])}`)
+                Connection:Disable()
+            end
+        end
+    end
+end
+
 local Window = Library:CreateWindow({
     -- Set Center to true if you want the menu to appear in the center
     -- Set AutoShow to true if you want the menu to appear when it is created
@@ -28,44 +55,15 @@ local Window = Library:CreateWindow({
 local Tabs = {
     -- Creates a new tab titled Main
     Main = Window:AddTab('Combat'),
-    
-     Visuals = Window:AddTab('Visuals'),
-     Rage = Window:AddTab('Rage'), 
-     Misc = Window:AddTab('Misc'), 
-     ['UI Settings'] = Window:AddTab('UI Settings')
+    Visuals = Window:AddTab('Visuals'),
+    Misc = Window:AddTab('Misc'),
+    Rage = Window:AddTab('Rage'),
+    ['UI Settings'] = Window:AddTab('UI Settings'),
 }
 
 -- Groupbox and Tabbox inherit the same functions
 -- except Tabboxes you have to call the functions on a tab (Tabbox:AddTab(name))
 local LeftGroupBox = Tabs.Main:AddLeftGroupbox('Groupbox')
-
-
-
-local LeftGroupBoxRage = Tabs.Rage:AddLeftGroupbox('Character')
-
-LeftGroupBoxRage:AddToggle('Walkspeed', {
-    Text = 'Change LocalPlayer Walkspeed',
-    Default = false, -- Default value (true / false)
-    Tooltip = 'Change LocalPlayer Walkspeed', -- Information shown when you hover over the toggle
-Callback = function(Value)
-        print(SelectedWalkspeed)
-    end
-})
-
-LeftGroupBoxRage:AddSlider('Select Walkspeed', {
-    Text = '',
-    Default = 16,
-    Min = 0,
-    Max = 30,
-    Rounding = 0,
-    Compact = false,
-
-    Callback = function(Value)
-        local SelectedWalkspeed = Value
-    end
-})
-
-
 
 -- We can also get our Main tab via the following code:
 -- local LeftGroupBox = Window.Tabs.Main:AddLeftGroupbox('Groupbox')
@@ -429,7 +427,7 @@ local WatermarkConnection = game:GetService('RunService').RenderStepped:Connect(
         FrameCounter = 0;
     end;
 
-    Library:SetWatermark(('LinoriaLib demo | %s fps | %s ms'):format(
+    Library:SetWatermark(('CrackerHook.cc | %s fps | %s ms'):format(
         math.floor(FPS),
         math.floor(game:GetService('Stats').Network.ServerStatsItem['Data Ping']:GetValue())
     ));
@@ -444,12 +442,123 @@ Library:OnUnload(function()
     Library.Unloaded = true
 end)
 
+-- Rage Settings
+local LeftGroupBox = Tabs.Rage:AddLeftGroupbox('Movement')
+local Players = game:GetService('Players')
+local LocalPlayer = Players.LocalPlayer
+
+-- SpeedHack Toggle
+LeftGroupBox:AddToggle('SpeedToggle', {
+    Text = 'Enable SpeedHack',
+    Default = false,
+    Tooltip = 'Changes the players walkspeed',
+
+    Callback = function(Value)
+    end
+}):AddKeyPicker('SpeedKeyPicker', {
+    Default = 'MB2',
+    SyncToggleState = false,
+    Mode = 'Hold',
+    Text = 'SpeedHack',
+    NoUI = false,
+
+    Callback = function(Value)
+        Toggles.SpeedToggle:SetValue(Value)
+    end,
+
+    ChangedCallback = function(New)
+    end
+})
+
+-- Walkspeed Slider
+LeftGroupBox:AddSlider('Walkspeed', {
+    Text = 'Walkspeed',
+    Default = 16,
+    Min = 10,
+    Max = 25,
+    Rounding = 0,
+    Compact = true,
+
+    Callback = function(Value)
+    end
+})
+
+-- JumpHack Toggle
+LeftGroupBox:AddToggle('JumpToggle', {
+    Text = 'Enable JumpHack',
+    Default = false,
+    Tooltip = 'Change JumpHeight',
+
+    Callback = function(Value)
+    end
+}):AddKeyPicker('JumpKeyPicker', {
+    Default = 'MB2',
+    SyncToggleState = true,
+    Mode = 'Hold',
+    Text = 'JumpHack',
+    NoUI = false,
+
+    Callback = function(Value)
+        Toggles.JumpToggle:SetValue(Value)
+    end,
+
+    ChangedCallback = function(New)
+    end
+})
+
+-- JumpHeight Slider
+LeftGroupBox:AddSlider('JumpHeight', {
+    Text = 'JumpHeight',
+    Default = 50,
+    Min = 50,
+    Max = 70,
+    Rounding = 0,
+    Compact = true,
+
+    Callback = function(Value)
+    end
+})
+
+-- SpeedHack loop
+task.spawn(function()
+    while true do
+        local char = LocalPlayer.Character
+        if char and char:FindFirstChild('Humanoid') then
+            local state = Options.SpeedKeyPicker:GetState()
+            Toggles.SpeedToggle:SetValue(state)
+            if state then
+                char.Humanoid.WalkSpeed = Options.Walkspeed.Value
+            else
+                char.Humanoid.WalkSpeed = 16
+            end
+        end
+        task.wait(0.1)
+    end
+end)
+
+-- JumpHack loop
+task.spawn(function()
+    while true do
+        local char = LocalPlayer.Character
+        if char and char:FindFirstChild('Humanoid') then
+            local state = Options.JumpKeyPicker:GetState()
+            Toggles.JumpToggle:SetValue(state)
+            if state then
+                char.Humanoid.JumpPower = Options.JumpHeight.Value
+            else
+                char.Humanoid.JumpPower = 50
+            end
+        end
+        task.wait(0.1)
+    end
+end)
+
 -- UI Settings
 local MenuGroup = Tabs['UI Settings']:AddLeftGroupbox('Menu')
 
 -- I set NoUI so it does not show up in the keybinds menu
 MenuGroup:AddButton('Unload', function() Library:Unload() end)
-MenuGroup:AddLabel('Menu bind'):AddKeyPicker('MenuKeybind', { Default = 'End', NoUI = true, Text = 'Menu keybind' })
+MenuGroup:AddLabel('Menu bind'):AddKeyPicker('MenuKeybind', { Default = 'RightShift', NoUI = true, Text = 'Menu keybind' })
 
 Library.ToggleKeybind = Options.MenuKeybind -- Allows you to have a custom keybind for the menu
 
@@ -467,13 +576,13 @@ SaveManager:IgnoreThemeSettings()
 
 -- Adds our MenuKeybind to the ignore list
 -- (do you want each config to have a different menu key? probably not.)
-SaveManager:SetIgnoreIndexes({ 'MenuKeybind' })
+SaveManager:SetIgnoreIndexes({})
 
 -- use case for doing it this way:
 -- a script hub could have themes in a global folder
 -- and game configs in a separate folder per game
-ThemeManager:SetFolder('MyScriptHub')
-SaveManager:SetFolder('MyScriptHub/specific-game')
+ThemeManager:SetFolder('CrackerHook.cc/Themes')
+SaveManager:SetFolder('CrackerHook.cc/PD')
 
 -- Builds our config menu on the right side of our tab
 SaveManager:BuildConfigSection(Tabs['UI Settings'])
@@ -485,8 +594,3 @@ ThemeManager:ApplyToTab(Tabs['UI Settings'])
 -- You can use the SaveManager:LoadAutoloadConfig() to load a config
 -- which has been marked to be one that auto loads!
 SaveManager:LoadAutoloadConfig()
-
-
-
-
-
